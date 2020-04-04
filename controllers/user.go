@@ -149,6 +149,98 @@ func (this*UserController) Handlelogin()  {
 		this.Ctx.SetCookie("username",username,-1)
 	}
 	//返回视图
-	this.Ctx.WriteString("登陆成功")
-	//this.Redirect("index.html",302)
+	this.SetSession("username",username)
+	//this.Ctx.WriteString("登陆成功")
+	//主页展示一般不需要过滤函数，不需要登陆也可以进入浏览商品
+	this.Redirect("/",302)
+}
+
+func (this*UserController)Logout()  {
+	this.DelSession("userName")
+	this.Redirect("/login",302)
+}
+
+func (this*UserController)ShowUserCenterInfo()  {
+	beego.Info("ShowUserCenterInfo")
+	userName := GetUser(&this.Controller)
+	this.Data["userName"] = userName
+	//采用高级查询
+	o:=orm.NewOrm()
+	var addr models.Address
+	o.QueryTable("Address").RelatedSel("User").Filter("User__Name",userName).Filter("Isdefault",true).One(&addr)
+	beego.Info("[ShowUserCenterInfo]addr:",addr)
+	if addr.Id == 0 {
+		this.Data["addr"] = ""
+	}else {
+		this.Data["addr"] = addr
+	}
+
+	this.Layout="userCenterLayout.html"
+	this.TplName="user_center_info.html"
+}
+
+func (this*UserController)ShowUserCenterOrder()  {
+	GetUser(&this.Controller)
+	this.Layout="userCenterLayout.html"
+	this.TplName="user_center_order.html"
+}
+
+func (this*UserController)ShowUserCenterSite()  {
+	userName := GetUser(&this.Controller)
+	var addr models.Address
+	o := orm.NewOrm()
+	o.QueryTable("Address").RelatedSel("User").Filter("User__Name",userName).Filter("Isdefault",true).One(&addr)
+	this.Data["addr"] = addr
+	this.Layout="userCenterLayout.html"
+	this.TplName="user_center_site.html"
+}
+
+//处理用户中心地址
+func (this*UserController)HandleUserCenterSite()  {
+	//获取数据
+	receiver := this.GetString("receiver")
+	addr := this.GetString("addr")
+	zipCode := this.GetString("zipCode")
+	phone := this.GetString("phone")
+
+	beego.Info("[HandleUserCenterSite]receiver:",receiver)
+	beego.Info("[HandleUserCenterSite]addr:",addr)
+	beego.Info("[HandleUserCenterSite]zipCode:",zipCode)
+	beego.Info("[HandleUserCenterSite]phone:",phone)
+	//校验数据
+	if receiver == "" || addr == "" || zipCode == "" || phone == ""{
+		beego.Info("添加数据不完整")
+		this.Redirect("/user/userCenterSite",302)
+		return
+	}
+	//处理数据
+	//插入数据
+	o := orm.NewOrm()
+	var addrUser models.Address
+	addrUser.Isdefault = true
+	err := o.Read(&addrUser,"Isdefault")
+	//err为nil说明查到了
+	if err == nil {
+		addrUser.Isdefault = false
+		o.Update(&addrUser)
+	}
+	userName := GetUser(&this.Controller)
+	var user models.User
+	user.Name = userName
+	o.Read(&user,"Name")
+
+	var addrUserNew models.Address
+	addrUserNew.Receiver = receiver
+	addrUserNew.Addr = addr
+	addrUserNew.Zipcode = zipCode
+	addrUserNew.Phone = phone
+	addrUserNew.Isdefault = true
+	addrUserNew.User = &user
+	_,err = o.Insert(&addrUserNew)
+	if err != nil {
+		beego.Info("[HandleUserCenterSite]insert addr failed err ",err)
+	}
+
+	this.Redirect("/user/userCenterSite",302)
+	//返回视图
 }
