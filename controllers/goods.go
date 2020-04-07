@@ -122,7 +122,7 @@ func (this*GoodsController)ShowGoodsDetail()  {
 		user.Name = userName.(string)
 		o.Read(&user,"Name")
 		//添加历史记录用redis存储
-		conn,err := redis.Dial("tcp","192.168.1.102:6379")
+		conn,err := redis.Dial("tcp","192.168.80.130:6379")
 		defer conn.Close()
 		if err!=nil {
 			beego.Info("redis连接失败")

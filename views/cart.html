@@ -64,7 +64,7 @@
 	{{range .goods}}
 		<ul class="cart_list_td clearfix">
 			<li class="col01"><input type="checkbox" name="" checked></li>
-			<li class="col02"><img src="http://192.168.1.102:8888/{{.goodsSku.Image}}"></li>
+			<li class="col02"><img src="http://192.168.80.130:8888/{{.goodsSku.Image}}"></li>
 			<li class="col03">{{.goodsSku.Name}}<br><em>{{.goodsSku.Price}}元/{{.goodsSku.Unite}}</em></li>
 			<li class="col04">{{.goodsSku.Unite}}</li>
 			<li class="col05">{{.goodsSku.Price}}元</li>
@@ -144,19 +144,108 @@
                 UpdateGoodsPrice()
             })
 
-			//添加商品数量
+			//增加商品数量
 			$('.add').click(function () {
 				count = $(this).next().val()
 				count = parseInt(count)+1
 				skuid = $(this).next().attr('skuid')
 				param = {"skuid":skuid,"count":count}
+				$.ajaxSettings.async = false//把ajax的异步改成同步
+				//errUpdate = false
+				//ajax默认是异步的，执行到这一步直接会往下执行，并不会等这个执行完再往下执行。
 				$.post("/user/updateCart",param,function (data) {
 					if(data.code == 5){
 					    alert(data.errmsg)
+						errUpdate = false
 					}else {
                         alert(data.errmsg)
+						errUpdate = true
 					}
                 })
+                $.ajaxSettings.async = true//把ajax的异步改成同步
+
+				if(!errUpdate){
+                    $(this).next().val(count)
+					price = $(this).parents('ul').children('.col05').text()
+                    price = parseFloat(price)
+					amount = count*price
+                    $(this).parents('ul').children('.col07').text(amount.toFixed(2)+'元')
+
+				}
+                ischecked = $(this).parents('ul').find(':checkbox').prop('checked')
+                if(ischecked){
+                    UpdateGoodsPrice()
+                }
             })
+
+			//减少商品数量
+			$('.minus').click(function () {
+				count = $(this).prev().val()
+				count = parseInt(count) - 1
+				if (count < 1){
+                    count = 1
+					//当前标签的前一个标签
+                    $(this).prev().val(count)
+					return
+				}
+				skuid = $(this).prev().attr('skuid')
+				param = {"skuid":skuid,"count":count}
+				$.ajaxSettings.async = false
+				$.post("/user/updateCart",param,function (data) {
+					if (data.code == 5){
+					    errUpdate = false
+					}else{
+                        errUpdate = true
+						alert(data.errmsg)
+					}
+                })
+
+                $.ajaxSettings.async = false
+				if (!errUpdate){
+                    $(this).prev().val(count)
+					//计算小计
+					price = $(this).parents('ul').children('.col05').text()
+					price = parseFloat(price)
+					amount = price * count
+                    $(this).parents('ul').children('.col07').text(amount.toFixed(2)+'元')
+				}
+				ischecked = $(this).parents('ul').find(":checkbox").prop("checked")
+				if(ischecked){
+                    UpdateGoodsPrice()
+				}
+            })
+
+			preCount = $('.num_show').val()
+            $('.num_show').blur(function () {
+				count = $(this).val()
+				if(isNaN(count)||count.trim().length == 0 || parseInt() < 0){
+                    count = preCount
+                    $(this).val(count)
+					return
+				}
+				skuid = $(this).attr("skuid")
+				param = {"skuid":skuid,"count":count}
+				$.ajaxSettings.async = false
+				$.post("/user/updateCart",param,function (data) {
+					if(data.code == 5){
+					    errUpdate =false
+					}else{
+                        errUpdate =true
+					}
+                })
+                $.ajaxSettings.async = true
+				if (!errUpdate){
+                    price = $(this).parents('ul').children('.col05').text()
+                    price = parseFloat(price)
+                    amount = price * count
+                    $(this).parents('ul').children('.col07').text(amount.toFixed(2)+'元')
+				}
+                ischecked = $(this).parents('ul').find(':checkbox').prop('checked')
+                if(ischecked){
+                    UpdateGoodsPrice()
+                }
+
+            })
+
 			
 		</script>

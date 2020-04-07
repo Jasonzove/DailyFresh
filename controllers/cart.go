@@ -40,7 +40,7 @@ func (this *CartController)HandleAddCart(){
 	o.Read(&user,"Name")
 
 	//购物车数据存在redis中用hash
-	conn,err := redis.Dial("tcp","192.168.1.102:6379")
+	conn,err := redis.Dial("tcp","192.168.80.130:6379")
 	if err != nil {
 		resp["code"] = 3
 		resp["msg"] ="redis数据库连接错误"
@@ -73,7 +73,7 @@ func GetCartCount(this *beego.Controller) int {
 	user.Name = userName.(string)
 	o.Read(&user,"Name")
 	beego.Info("[GetCartCount]o.Read,user:",user.Id)
-	conn,err := redis.Dial("tcp","192.168.1.102:6379")
+	conn,err := redis.Dial("tcp","192.168.80.130:6379")
 	if err != nil {
 		return 0
 	}
@@ -92,7 +92,7 @@ func (this *CartController)ShowCart() {
 	user.Name = userName
 	o.Read(&user,"Name")
 	//获取redis数据库信息
-	conn,_ := redis.Dial("tcp","192.168.1.102:6379")
+	conn,_ := redis.Dial("tcp","192.168.80.130:6379")
 	rep,err := conn.Do("hgetall","cart_"+strconv.Itoa(user.Id)) //返回的是map[string]int
 	goodsMap,_:=redis.IntMap(rep,err)
 	goods := make([]map[string]interface{},len(goodsMap))
@@ -146,7 +146,7 @@ func (this *CartController)HandleUpdateCart()  {
 	o.Read(&user,"Name")
 
 
-	conn,err := redis.Dial("tcp","192.168.1.102:6379")
+	conn,err := redis.Dial("tcp","192.168.80.130:6379")
 	if err!= nil {
 		resp["code"] = 2
 		resp["errmsg"] = "redis连接失败"
